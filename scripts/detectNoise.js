@@ -23,42 +23,76 @@ const dirPatterns = [
 ];
 
 function isNoiseFile(filePath) {
-  const normalized = path.posix.normalize(filePath);
+  const normalized = filePath.replaceAll('\\', '/');
   return filePatterns.some(pattern => pattern.test(normalized)) ||
          dirPatterns.some(pattern => pattern.test(normalized));
 }
 
-function detectNoiseFiles(files, ignore = []) {
+const IGNORE_FILE = '.pr-noise-ignore';
+
+function loadIgnorePatterns(filePath = IGNORE_FILE) {
+  if (!fs.existsSync(filePath)) return [];
+
+  const lines = fs.readFileSync(filePath, 'utf8')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#')); // skip empty and comment lines
+
+  return lines.map(pattern => {
+    // Escape all regex special characters except *
+    let escaped = pattern.replaceAll(/[.+?^${}()|[\]\\]/g, String.raw`\$&`);
+    // Now replace * with .* for glob wildcard
+    escaped = escaped.replaceAll('*', '.*');
+    return new RegExp(`^${escaped}$`);
+  });
+}
+
+// Load ignore patterns once at module initialization
+let cachedIgnorePatterns = loadIgnorePatterns();
+
+// Exposed function to reload patterns (useful for testing)
+function reloadIgnorePatterns() {
+  cachedIgnorePatterns = loadIgnorePatterns();
+  return cachedIgnorePatterns;
+}
+
+function isIgnored(filePath, patterns = cachedIgnorePatterns) {
+  return patterns.some(pattern => pattern.test(filePath));
+}
+
+function detectNoiseFiles(files, ignore = [], ignorePatterns = cachedIgnorePatterns) {
   return files.filter(file => {
     if (ignore.includes(file)) return false;
+    if (isIgnored(file, ignorePatterns)) return false;
     return isNoiseFile(file);
   });
 }
 
 function findNoiseFiles(dir = '.') {
-    let flagged = [];
+  let flagged = [];
 
-    function walk(currentPath) {
-        const entries = fs.readdirSync(currentPath, {withFileTypes: true});
+  function walk(currentPath) {
+    const entries = fs.readdirSync(currentPath, { withFileTypes: true });
 
-        for (const entry of entries) {
-            const fullPath = path.join(currentPath, entry.name);
-            const relativePath = path.relative('.', fullPath);
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+      const relativePath = path.relative('.', fullPath);
 
-            if (isNoiseFile(relativePath)) {
-                flagged.push(fullPath);
-            }
+      if (isIgnored(relativePath)) continue;
 
-            if (entry.isDirectory() && !isNoiseFile(relativePath)) {
-                walk(fullPath);
-            }
-        }
+      if (isNoiseFile(relativePath)) {
+        flagged.push(fullPath);
+      }
+
+      if (entry.isDirectory() && !isNoiseFile(relativePath)) {
+        walk(fullPath);
+      }
     }
+  }
 
-    walk(dir);
-    return flagged;
+  walk(dir);
+  return flagged;
 }
-
 
 function formatNoiseOutput(noiseFiles) {
     if (noiseFiles.length > 0) {
@@ -80,4 +114,4 @@ if (noiseFiles.length > 0) {
 }
 fs.writeFileSync('noise.txt', output);
 
-module.exports = { findNoiseFiles, formatNoiseOutput, detectNoiseFiles };
+module.exports = { findNoiseFiles, formatNoiseOutput, detectNoiseFiles, reloadIgnorePatterns, loadIgnorePatterns };
