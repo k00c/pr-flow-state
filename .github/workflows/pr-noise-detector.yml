@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run PR Noise Detection script
-        run: node scripts/pr-noise-detector.js
+        run: node scripts/detectNoise.js
 
       - name: Comment on PR with noise results
         uses: actions/github-script@v6
