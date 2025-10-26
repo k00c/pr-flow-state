@@ -12,7 +12,7 @@ function findNoiseFiles(dir = '.') {
     let flagged = [];
 
     function walk(currentPath) {
-        const items = fs.readdirSync(currentPath, {withFileTypes: true});
+        const entries = fs.readdirSync(currentPath, {withFileTypes: true});
 
         for (const entry of entries) {
             const fullPath = path.join(currentPath, entry.name);
