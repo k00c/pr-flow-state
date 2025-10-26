@@ -1,5 +1,0 @@
-⚠️ Found potentially superfluous files/directories:
-- `.vscode`
-- `debug.log`
-
-🧹 Consider removing them if they are not needed.
