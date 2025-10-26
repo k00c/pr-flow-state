@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { findNoiseFiles, formatNoiseOutput, detectNoiseFiles } = require('./detectNoise');
+const { findNoiseFiles, formatNoiseOutput, detectNoiseFiles, reloadIgnorePatterns, loadIgnorePatterns } = require('./detectNoise');
 
 describe('PR Noise Detector', () => {
   const TEST_DIR = 'test-files-temp';
@@ -74,12 +74,8 @@ describe('PR Noise Detector', () => {
     // Create a .pr-noise-ignore file
     fs.writeFileSync('.pr-noise-ignore', '# Ignore debug files\ndebug.log\ntmp/*.txt');
     
-    // Verify file was created
-    expect(fs.existsSync('.pr-noise-ignore')).toBe(true);
-
-    // Use jest.resetModules() to fully clear module cache
-    jest.resetModules();
-    const { detectNoiseFiles: detectNoiseFilesReloaded } = require('./detectNoise');
+    // Reload ignore patterns from the file
+    reloadIgnorePatterns();
 
     const files = [
       'debug.log',
@@ -87,7 +83,7 @@ describe('PR Noise Detector', () => {
       '.vscode/settings.json',
       'scratch.js'
     ];
-    const noise = detectNoiseFilesReloaded(files);
+    const noise = detectNoiseFiles(files);
     
     // debug.log and tmp/output.txt should be ignored
     expect(noise).toEqual([
@@ -97,6 +93,32 @@ describe('PR Noise Detector', () => {
 
     // Cleanup
     fs.rmSync('.pr-noise-ignore', { force: true });
+    reloadIgnorePatterns(); // Reset to empty patterns
+  });
+
+  test('loadIgnorePatterns with custom file path', () => {
+    // Create a custom ignore file
+    fs.writeFileSync('.test-ignore', 'scratch.*\nexperiments/*');
+    
+    const patterns = loadIgnorePatterns('.test-ignore');
+    
+    const files = [
+      'scratch.js',
+      'experiments/test.js',
+      'debug.log',
+      '.vscode/settings.json'
+    ];
+    
+    // Test with custom patterns
+    const noise = detectNoiseFiles(files, [], patterns);
+    
+    expect(noise).toEqual([
+      'debug.log',
+      '.vscode/settings.json'
+    ]);
+
+    // Cleanup
+    fs.rmSync('.test-ignore', { force: true });
   });
 
   test('correct output format', () => {

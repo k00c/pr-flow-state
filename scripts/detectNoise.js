@@ -30,10 +30,10 @@ function isNoiseFile(filePath) {
 
 const IGNORE_FILE = '.pr-noise-ignore';
 
-function loadIgnorePatterns() {
-  if (!fs.existsSync(IGNORE_FILE)) return [];
+function loadIgnorePatterns(filePath = IGNORE_FILE) {
+  if (!fs.existsSync(filePath)) return [];
 
-  const lines = fs.readFileSync(IGNORE_FILE, 'utf8')
+  const lines = fs.readFileSync(filePath, 'utf8')
     .split('\n')
     .map(line => line.trim())
     .filter(line => line && !line.startsWith('#')); // skip empty and comment lines
@@ -48,16 +48,22 @@ function loadIgnorePatterns() {
 }
 
 // Load ignore patterns once at module initialization
-const cachedIgnorePatterns = loadIgnorePatterns();
+let cachedIgnorePatterns = loadIgnorePatterns();
 
-function isIgnored(filePath) {
-  return cachedIgnorePatterns.some(pattern => pattern.test(filePath));
+// Exposed function to reload patterns (useful for testing)
+function reloadIgnorePatterns() {
+  cachedIgnorePatterns = loadIgnorePatterns();
+  return cachedIgnorePatterns;
 }
 
-function detectNoiseFiles(files, ignore = []) {
+function isIgnored(filePath, patterns = cachedIgnorePatterns) {
+  return patterns.some(pattern => pattern.test(filePath));
+}
+
+function detectNoiseFiles(files, ignore = [], ignorePatterns = cachedIgnorePatterns) {
   return files.filter(file => {
     if (ignore.includes(file)) return false;
-    if (isIgnored(file)) return false;
+    if (isIgnored(file, ignorePatterns)) return false;
     return isNoiseFile(file);
   });
 }
@@ -108,4 +114,4 @@ if (noiseFiles.length > 0) {
 }
 fs.writeFileSync('noise.txt', output);
 
-module.exports = { findNoiseFiles, formatNoiseOutput, detectNoiseFiles };
+module.exports = { findNoiseFiles, formatNoiseOutput, detectNoiseFiles, reloadIgnorePatterns, loadIgnorePatterns };
