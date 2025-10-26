@@ -5,26 +5,23 @@ const path = require('path');
 const { findNoiseFiles, formatNoiseOutput, detectNoiseFiles } = require('./detectNoise');
 
 describe('PR Noise Detector', () => {
+  const TEST_DIR = 'test-files-temp';
+
   beforeAll(() => {
-    // Setup test files and directories
-    fs.mkdirSync('tmp', { recursive: true });
-    fs.mkdirSync('.vscode', { recursive: true });
-    fs.writeFileSync('debug.log', 'debug log');
-    fs.writeFileSync('tmp/output.txt', 'output');
-    fs.writeFileSync('.vscode/settings.json', '{}');
-    fs.writeFileSync('index.js', '// source code');
-    fs.writeFileSync('README.md', '# readme');
+    // Setup test files and directories in a test-specific folder
+    fs.mkdirSync(TEST_DIR, { recursive: true });
+    fs.mkdirSync(`${TEST_DIR}/tmp`, { recursive: true });
+    fs.mkdirSync(`${TEST_DIR}/.vscode`, { recursive: true });
+    fs.writeFileSync(`${TEST_DIR}/debug.log`, 'debug log');
+    fs.writeFileSync(`${TEST_DIR}/tmp/output.txt`, 'output');
+    fs.writeFileSync(`${TEST_DIR}/.vscode/settings.json`, '{}');
+    fs.writeFileSync(`${TEST_DIR}/index.js`, '// source code');
+    fs.writeFileSync(`${TEST_DIR}/README.md`, '# readme');
   });
 
   afterAll(() => {
-    // Cleanup test files and directories
-    fs.rmSync('debug.log', { force: true });
-    fs.rmSync('tmp/output.txt', { force: true });
-    fs.rmSync('.vscode/settings.json', { force: true });
-    fs.rmSync('index.js', { force: true });
-    fs.rmSync('README.md', { force: true });
-    fs.rmdirSync('tmp', { recursive: true });
-    fs.rmdirSync('.vscode', { recursive: true });
+    // Cleanup test directory
+    fs.rmSync(TEST_DIR, { recursive: true, force: true });
     fs.rmSync('.pr-noise-ignore', { force: true });
   });
 
@@ -76,9 +73,12 @@ describe('PR Noise Detector', () => {
   test('respects .pr-noise-ignore file', () => {
     // Create a .pr-noise-ignore file
     fs.writeFileSync('.pr-noise-ignore', '# Ignore debug files\ndebug.log\ntmp/*.txt');
+    
+    // Verify file was created
+    expect(fs.existsSync('.pr-noise-ignore')).toBe(true);
 
-    // Re-require the module to reload ignore patterns
-    delete require.cache[require.resolve('./detectNoise')];
+    // Use jest.resetModules() to fully clear module cache
+    jest.resetModules();
     const { detectNoiseFiles: detectNoiseFilesReloaded } = require('./detectNoise');
 
     const files = [

@@ -38,17 +38,20 @@ function loadIgnorePatterns() {
     .map(line => line.trim())
     .filter(line => line && !line.startsWith('#')); // skip empty and comment lines
 
-  return lines.map(pattern => new RegExp(
-    pattern
-      .replace(/\./g, '\\.')      // escape dots
-      .replace(/\*/g, '.*')       // wildcard
-      .replace(/\//g, '\\/')      // escape slashes
-  ));
+  return lines.map(pattern => {
+    // Escape all regex special characters except *
+    let escaped = pattern.replaceAll(/[.+?^${}()|[\]\\]/g, String.raw`\$&`);
+    // Now replace * with .* for glob wildcard
+    escaped = escaped.replaceAll('*', '.*');
+    return new RegExp(`^${escaped}$`);
+  });
 }
 
+// Load ignore patterns once at module initialization
+const cachedIgnorePatterns = loadIgnorePatterns();
+
 function isIgnored(filePath) {
-  const ignorePatterns = loadIgnorePatterns();
-  return ignorePatterns.some(pattern => pattern.test(filePath));
+  return cachedIgnorePatterns.some(pattern => pattern.test(filePath));
 }
 
 function detectNoiseFiles(files, ignore = []) {
