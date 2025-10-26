@@ -29,7 +29,7 @@ Can PR reviews be enjoyable?
 - An enjoyable PR review would surface intent first, highlight meaningful changes, and feel like contributing to delivery rather than policing.
 - The level of ceremony would match the level of risk: trivial changes flow through lightly, while high‑impact changes get the deep collaborative review they deserve.
 - PRs would stay scoped and coherent, so reviewers can focus on the *story of the change* rather than untangling unrelated edits.
-- Noise‑free by default: superfluous debug or temporary files are automatically excluded or quarantined, so reviewers only see what matters.
+- Noise‑free by default: irrelevant artifacts never reach the reviewer’s eyes — they’re flagged or quarantined so cleanup happens before collaboration begins.
 - This repo explores whether we can prototype workflows that make that vision real.
 
 ## The Vision
@@ -42,8 +42,8 @@ The aim is to design workflows where reviewing code is part of delivering value,
 - **Right‑sized ceremony**: The level of review matches the level of risk — trivial changes flow lightly, high‑impact changes get deep collaboration.
 - **Context packaged**: Reviewers see the relevant story, design decision, or risk area without hunting for it.
 - **Signal over noise**: Automated checks summarize outcomes and highlight only what needs human judgment.
-- **Scoped and coherent**: PRs tell a clear story, not a jumble of unrelated edits.
-- **Noise‑free by default**: Debug files, temp artifacts, and generated cruft are automatically excluded from review.
+- **Scoped and coherent**: PRs stay focused on a single story, avoiding the “while I’m here” sprawl that creates oversized, tangled reviews.
+- **Noise‑free by default**: Debug files, temporary artifacts, and generated cruft are automatically quarantined so reviewers only see what matters, and submitters can clean up without human prompting.
 - **Flow‑preserving**: Reviews fit naturally into deep work, rather than pulling developers out of it.
 - **Shared ownership**: A PR review should feel like helping ship the feature, not gatekeeping it.
 
@@ -52,14 +52,45 @@ The aim is to design workflows where reviewing code is part of delivering value,
 - Developers feel energized by reviews, not drained.
 - AI and human reviewers collaborate seamlessly, each doing what they’re best at.
 - Teams experience fewer stalls, less drift from intent, and more confidence in delivery.
+- PRs become a trusted unit of collaboration, not a source of friction.
 
 ### This Repo’s Purpose
 This project is a lab for exploring whether PR reviews can be redesigned to achieve this vision.  
 Through small experiments, prototypes, and reflections, I’ll test ways to make PR reviews enjoyable and flow‑inducing.
 
 ## Experiments
-### Weekend Sprint 1: [Date]
-- **Goal**: [Specific goal]
+### Weekend Sprint 1: 26/10/25
+- **Goal**: PR Noise Detector - A bot that identifies superfluous files in a PR.
+### Steps to Implement
+1. **Create a GitHub Action**
+   - Add a workflow file: `.github/workflows/pr-noise-detector.yml`
+   - Trigger on `pull_request` events (open, synchronize)
+   - Check out the PR branch
+
+2. **Write the detection logic**
+   - Script scans for common noise patterns:
+     - Debug files: `*.log`, `debug.*`, `tmp/*`
+     - IDE artifacts: `.vscode/`, `.idea/`
+     - Build outputs: `dist/`, `build/`, `*.pyc`
+     - Test artifacts: `coverage/`, `.pytest_cache/`
+   - Output a list of flagged files
+
+3. **Comment on the PR**
+   - Use GitHub’s API to post a comment
+   - Format:  
+     ```
+     ⚠️ Found 3 potentially superfluous files:
+     - debug.log
+     - tmp/output.txt
+     - .vscode/settings.json
+     ```
+   - Provide rationale so submitters can clean up without reviewer prompting
+
+4. **Make it configurable**
+   - Support a `.pr-noise-ignore` file in the repo
+   - Allow teams to customize what counts as “noise”
+
+## Outcome
 - **What I tried**: 
 - **What I learned**:
 - **Artifacts**: [Links to code/diagrams]
