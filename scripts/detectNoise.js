@@ -23,7 +23,7 @@ const dirPatterns = [
 ];
 
 function isNoiseFile(filePath) {
-  const normalized = filePath.replaceAll('\\', '/');
+  const normalized = path.posix.normalize(filePath);
   return filePatterns.some(pattern => pattern.test(normalized)) ||
          dirPatterns.some(pattern => pattern.test(normalized));
 }
