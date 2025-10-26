@@ -1,0 +1,4 @@
+- `.vscode`
+- `debug.log`
+
+🧹 Consider removing them if they are not needed.
