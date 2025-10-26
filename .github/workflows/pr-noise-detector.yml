@@ -11,6 +11,9 @@ jobs:
       - name: Check out PR branch
         uses: actions/checkout@v4
 
+      - name: Run PR Noise Detection script
+        run: node scripts/pr-noise-detector.js
+
       - name: Comment on PR with noise results
         uses: actions/github-script@v6
         with:
