@@ -7,6 +7,9 @@ on:
 jobs:
   detect-noise:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
     steps:
       - name: Check out PR branch
         uses: actions/checkout@v4
@@ -21,10 +24,11 @@ jobs:
             const fs = require('fs');
             const noiseOutput = fs.readFileSync('noise.txt', 'utf8');
 
-            if (noiseOutput.includes("⚠️"))
+            if (noiseOutput.includes("⚠️")) {
                 github.rest.issues.createComment({
                     issue_number: context.issue.number,
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     body: noiseOutput
                 });
+            }

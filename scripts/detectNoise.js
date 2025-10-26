@@ -37,6 +37,7 @@ function findNoiseFiles(dir = '.') {
 let output = '';
 const noiseFiles = findNoiseFiles();
 if (noiseFiles.length > 0) {
+    output += '⚠️ Found potentially superfluous files/directories:\n';
     console.log('⚠️ Found potentially superfluous files/directories:');
     for (const file of noiseFiles) {
         output+=(`- \`${file}\`\n`);
