@@ -1,3 +1,4 @@
+⚠️ Found potentially superfluous files/directories:
 - `.vscode`
 - `debug.log`
 
