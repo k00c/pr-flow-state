@@ -1,0 +1,12 @@
+name: PR Noise Detector
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  detect-noise:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v4
