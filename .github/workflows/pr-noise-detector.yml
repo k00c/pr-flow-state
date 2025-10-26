@@ -7,6 +7,9 @@ on:
 jobs:
   detect-noise:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
     steps:
       - name: Check out PR branch
         uses: actions/checkout@v4
