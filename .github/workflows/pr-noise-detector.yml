@@ -5,8 +5,26 @@ on:
     types: [opened, synchronize]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run unit tests
+        run: npx jest scripts/detectNoise.test.js
+
   detect-noise:
     runs-on: ubuntu-latest
+    needs: test
     permissions:
       pull-requests: write
       issues: write
