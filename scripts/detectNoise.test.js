@@ -18,13 +18,13 @@ describe('PR Noise Detector', () => {
 
   afterAll(() => {
     // Cleanup test files and directories
-    fs.rmSync('debug.log');
-    fs.rmSync('tmp/output.txt');
-    fs.rmSync('.vscode/settings.json');
-    fs.rmSync('index.js');
-    fs.rmSync('README.md');
-    fs.rmdirSync('tmp');
-    fs.rmdirSync('.vscode');
+    fs.rmSync('debug.log', { force: true });
+    fs.rmSync('tmp/output.txt', { force: true });
+    fs.rmSync('.vscode/settings.json', { force: true });
+    fs.rmSync('index.js', { force: true });
+    fs.rmSync('README.md', { force: true });
+    fs.rmdirSync('tmp', { force: true });
+    fs.rmdirSync('.vscode', { force: true });
   });
 
   test('flags known noise files', () => {
