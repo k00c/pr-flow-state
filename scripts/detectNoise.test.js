@@ -23,8 +23,14 @@ describe('PR Noise Detector', () => {
     fs.rmSync('.vscode/settings.json', { force: true });
     fs.rmSync('index.js', { force: true });
     fs.rmSync('README.md', { force: true });
-    fs.rmdirSync('tmp', { force: true });
-    fs.rmdirSync('.vscode', { force: true });
+    fs.rmdirSync('tmp', { recursive: true });
+    fs.rmdirSync('.vscode', { recursive: true });
+    fs.rmSync('.pr-noise-ignore', { force: true });
+  });
+
+  afterEach(() => {
+    // Clean up any .pr-noise-ignore file after each test
+    fs.rmSync('.pr-noise-ignore', { force: true });
   });
 
   test('flags known noise files', () => {
@@ -55,7 +61,7 @@ describe('PR Noise Detector', () => {
     expect(noise).toEqual([]);
   });
 
-  test('respects ignore configuration', () => {
+  test('respects ignore configuration via parameter', () => {
     const files = [
       'debug.log',
       'tmp/output.txt',
@@ -65,6 +71,32 @@ describe('PR Noise Detector', () => {
     const ignore = ['debug.log', 'tmp/output.txt'];
     const noise = detectNoiseFiles(files, ignore);
     expect(noise).toEqual(['.vscode/settings.json']);
+  });
+
+  test('respects .pr-noise-ignore file', () => {
+    // Create a .pr-noise-ignore file
+    fs.writeFileSync('.pr-noise-ignore', '# Ignore debug files\ndebug.log\ntmp/*.txt');
+
+    // Re-require the module to reload ignore patterns
+    delete require.cache[require.resolve('./detectNoise')];
+    const { detectNoiseFiles: detectNoiseFilesReloaded } = require('./detectNoise');
+
+    const files = [
+      'debug.log',
+      'tmp/output.txt',
+      '.vscode/settings.json',
+      'scratch.js'
+    ];
+    const noise = detectNoiseFilesReloaded(files);
+    
+    // debug.log and tmp/output.txt should be ignored
+    expect(noise).toEqual([
+      '.vscode/settings.json',
+      'scratch.js'
+    ]);
+
+    // Cleanup
+    fs.rmSync('.pr-noise-ignore', { force: true });
   });
 
   test('correct output format', () => {

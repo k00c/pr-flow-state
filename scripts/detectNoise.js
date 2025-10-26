@@ -23,42 +23,67 @@ const dirPatterns = [
 ];
 
 function isNoiseFile(filePath) {
-  const normalized = path.posix.normalize(filePath);
+  const normalized = filePath.replaceAll('\\', '/');
   return filePatterns.some(pattern => pattern.test(normalized)) ||
          dirPatterns.some(pattern => pattern.test(normalized));
+}
+
+const IGNORE_FILE = '.pr-noise-ignore';
+
+function loadIgnorePatterns() {
+  if (!fs.existsSync(IGNORE_FILE)) return [];
+
+  const lines = fs.readFileSync(IGNORE_FILE, 'utf8')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#')); // skip empty and comment lines
+
+  return lines.map(pattern => new RegExp(
+    pattern
+      .replace(/\./g, '\\.')      // escape dots
+      .replace(/\*/g, '.*')       // wildcard
+      .replace(/\//g, '\\/')      // escape slashes
+  ));
+}
+
+function isIgnored(filePath) {
+  const ignorePatterns = loadIgnorePatterns();
+  return ignorePatterns.some(pattern => pattern.test(filePath));
 }
 
 function detectNoiseFiles(files, ignore = []) {
   return files.filter(file => {
     if (ignore.includes(file)) return false;
+    if (isIgnored(file)) return false;
     return isNoiseFile(file);
   });
 }
 
 function findNoiseFiles(dir = '.') {
-    let flagged = [];
+  let flagged = [];
 
-    function walk(currentPath) {
-        const entries = fs.readdirSync(currentPath, {withFileTypes: true});
+  function walk(currentPath) {
+    const entries = fs.readdirSync(currentPath, { withFileTypes: true });
 
-        for (const entry of entries) {
-            const fullPath = path.join(currentPath, entry.name);
-            const relativePath = path.relative('.', fullPath);
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+      const relativePath = path.relative('.', fullPath);
 
-            if (isNoiseFile(relativePath)) {
-                flagged.push(fullPath);
-            }
+      if (isIgnored(relativePath)) continue;
 
-            if (entry.isDirectory() && !isNoiseFile(relativePath)) {
-                walk(fullPath);
-            }
-        }
+      if (isNoiseFile(relativePath)) {
+        flagged.push(fullPath);
+      }
+
+      if (entry.isDirectory() && !isNoiseFile(relativePath)) {
+        walk(fullPath);
+      }
     }
+  }
 
-    walk(dir);
-    return flagged;
+  walk(dir);
+  return flagged;
 }
-
 
 function formatNoiseOutput(noiseFiles) {
     if (noiseFiles.length > 0) {
