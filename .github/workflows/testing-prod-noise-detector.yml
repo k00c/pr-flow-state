@@ -1,0 +1,14 @@
+name: PR Quality Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  detect-noise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: k00c/pr-noise-detector@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
