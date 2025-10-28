@@ -9,6 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: k00c/pr-noise-detector@v1
+      - uses: k00c/pr-noise-detector-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
